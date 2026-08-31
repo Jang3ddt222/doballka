@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>doballka</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&display=swap" rel="stylesheet">
+
+    <!-- สคริปต์ตัวเล่นสตรีม -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dashjs@latest/dist/dash.all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest/dist/mpegts.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #030d18;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header doballka */
+        .header-bar {
+            width: 100%;
+            background-color: #051324;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 10px 18px;
+            border-bottom: 2px solid #00f3ff;
+            box-shadow: 0 4px 15px rgba(0, 243, 255, 0.15);
+            flex-shrink: 0;
+        }
+
+        .logo-doballka {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.6em;
+            font-weight: 900;
+            color: #00f3ff;
+            text-transform: lowercase;
+            letter-spacing: -0.5px;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.6);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-doballka span {
+            color: #ffea00;
+            text-shadow: 0 0 10px rgba(255, 234, 0, 0.6);
+        }
+
+        /* กล่อง Video Player */
+        .player-container {
+            width: 100%;
+            background-color: #000;
+            position: relative;
+            aspect-ratio: 16 / 9;
+            max-height: 40vh;
+            flex-shrink: 0;
+            border-bottom: 1px solid #133257;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #main-player, #iframe-player {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: none;
+        }
+
+        #main-player {
+            display: block;
+        }
+
+        .player-placeholder {
+            position: absolute;
+            color: #00f3ff;
+            font-size: 0.9em;
+            font-weight: bold;
+            text-align: center;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .playing-title-bar {
+            width: 100%;
+            background-color: #051324;
+            padding: 6px 14px;
+            font-size: 0.8em;
+            color: #ffea00;
+            font-weight: bold;
+            border-bottom: 1px solid #133257;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex-shrink: 0;
+        }
+
+        /* แถบวิ่ง */
+        .marquee-container {
+            width: 100%;
+            background-color: #1a0308;
+            color: #ff2e55;
+            padding: 5px 0;
+            overflow: hidden;
+            white-space: nowrap;
+            font-size: 0.8em;
+            font-weight: 800;
+            flex-shrink: 0;
+            border-bottom: 1px solid #ff003c;
+        }
+
+        .marquee-text {
+            color: #ff003c;
+            text-shadow: 0 0 8px rgba(255, 0, 60, 0.6);
+        }
+
+        /* พื้นที่รายการช่อง (แนวตั้งแบบในรูปตัวอย่าง) */
+        .list-scroll-area {
+            flex-grow: 1;
+            overflow-y: auto;
+            background-color: #f0f2f5;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .category-header {
+            background-color: #e4e7eb;
+            font-size: 0.8em;
+            color: #0275d8;
+            font-weight: bold;
+            padding: 8px 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #dcedc8;
+        }
+
+        /* ดีไซน์แถวรายการช่องแนวตั้ง */
+        .channel-list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #ffffff;
+            padding: 10px 16px;
+            border-bottom: 1px solid #e4e7eb;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .channel-list-item:active, .channel-list-item:hover {
+            background-color: #e2e8f0;
+        }
+
+        .channel-info-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            overflow: hidden;
+        }
+
+        .channel-thumb {
+            width: 48px;
+            height: 36px;
+            border-radius: 6px;
+            background-color: #030d18;
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65em;
+            font-weight: bold;
+            color: #00f3ff;
+            flex-shrink: 0;
+            border: 1px solid #ccc;
+        }
+
+        .channel-text-group {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .channel-main-title {
+            font-size: 0.9em;
+            font-weight: bold;
+            color: #111827;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .channel-sub-title {
+            font-size: 0.75em;
+            color: #6b7280;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 2px;
+        }
+
+        /* ป้าย Live Now สีแดง */
+        .live-badge {
+            background-color: #ff0000;
+            color: #ffffff;
+            font-size: 0.65em;
+            font-weight: 800;
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+            box-shadow: 0 0 6px rgba(255, 0, 0, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-bar">
+        <div class="logo-doballka">
+            <span class="ball-icon">⚽</span>doball<span>ka</span>
+        </div>
+    </div>
+
+    <div class="player-container">
+        <div id="player-status" class="player-placeholder">▶ เลือกช่องรายการด้านล่างเพื่อรับชม</div>
+        <video id="main-player" controls autoplay playsinline></video>
+        <iframe id="iframe-player" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
+    </div>
+    <div id="playing-title" class="playing-title-bar">กำลังรับชม: -</div>
+
+    <div class="marquee-container">
+        <marquee scrollamount="5" behavior="scroll" direction="left" class="marquee-text">
+            🔥 ⚽ 📺 คลิกเลือกช่องรายการ เพื่อรับชมบนหน้าจอเพลเยอร์ด้านบนได้ทันที! 🚀 ⚽ 🔥
+        </marquee>
+    </div>
+
+    <div class="list-scroll-area">
+
+        <!-- DAZN CHANNELS -->
+        <div class="category-header">DAZN CHANNELS</div>
+        
+        <div class="channel-list-item" onclick="playWebStream('http://mk-liveportal.com:5909/GoldSx/fXJem3k3UfCs/14789', 'DAZN 1 HD [VF]')">
+            <div class="channel-info-left">
+                <div class="channel-thumb">DAZN</div>
+                <div class="channel-text-group">
+                    <div class="channel-main-title">DAZN 1 HD [VF]</div>
+                    <div class="channel-sub-title">Live Sports Stream</div>
+                </div>
+            </div>
+            <div class="live-badge">LIVE NOW</div>
+        </div>
+
+        <div class="channel-list-item" onclick="playWebStream('http://mk-liveportal.com:5909/GoldSx/fXJem3k3UfCs/36107', 'DAZN 1')">
+            <div class="channel-info-left">
+                <div class="channel-thumb">DAZN</div>
+                <div class="channel-text-group">
+                    <div class="channel-main-title">DAZN 1</div>
+                    <div class="channel-sub-title">Live Sports Stream</div>
+                </div>
+            </div>
+            <div class="live-badge">LIVE NOW</div>
+        </div>
+
+        <!-- SKY SPORTS CHANNELS -->
+        <div class="category-header">SKY SPORTS CHANNELS</div>
+
+        <div class="channel-list-item" onclick="playWebStream('http://mk-liveportal.com:5909/GoldSx/fXJem3k3UfCs/928', 'Sky Sports News HD')">
+            <div class="channel-info-left">
+                <div class="channel-thumb">SKY</div>
+                <div class="channel-text-group">
+                    <div class="channel-main-title">Sky Sports News HD</div>
+                    <div class="channel-sub-title">24/7 Sports News</div>
+                </div>
+            </div>
+            <div class="live-badge">LIVE NOW</div>
+        </div>
+
+        <div class="channel-list-item" onclick="playWebStream('http://mk-liveportal.com:5909/GoldSx/fXJem3k3UfCs/14682', 'Sky Sports News')">
+            <div class="channel-info-left">
+                <div class="channel-thumb">SKY</div>
+                <div class="channel-text-group">
+                    <div class="channel-main-title">Sky Sports News</div>
+                    <div class="channel-sub-title">Sports Update</div>
+                </div>
+            </div>
+            <div class="live-badge">LIVE NOW</div>
+        </div>
+
+    </div>
+
+    <script>
+        var hlsPlayer = null;
+        var dashPlayer = null;
+        var tsPlayer = null;
+
+        function clearAllPlayers() {
+            var videoElement = document.getElementById('main-player');
+            var iframeElement = document.getElementById('iframe-player');
+
+            if (hlsPlayer) {
+                hlsPlayer.destroy();
+                hlsPlayer = null;
+            }
+            if (dashPlayer) {
+                dashPlayer.reset();
+                dashPlayer = null;
+            }
+            if (tsPlayer) {
+                tsPlayer.destroy();
+                tsPlayer = null;
+            }
+
+            videoElement.pause();
+            videoElement.src = '';
+            iframeElement.src = '';
+        }
+
+        function playWebStream(streamUrl, channelName) {
+            var videoElement = document.getElementById('main-player');
+            var iframeElement = document.getElementById('iframe-player');
+            var statusElement = document.getElementById('player-status');
+            var titleElement = document.getElementById('playing-title');
+
+            if (!streamUrl) return;
+
+            statusElement.style.display = 'none';
+            titleElement.innerText = 'กำลังรับชม: ' + (channelName || 'Unassigned');
+
+            clearAllPlayers();
+
+            if (streamUrl.includes('.m3u8')) {
+                iframeElement.style.display = 'none';
+                videoElement.style.display = 'block';
+
+                if (Hls.isSupported()) {
+                    hlsPlayer = new Hls();
+                    hlsPlayer.loadSource(streamUrl);
+                    hlsPlayer.attachMedia(videoElement);
+                    hlsPlayer.on(Hls.Events.MANIFEST_PARSED, function() {
+                        videoElement.play().catch(function(e){ console.log(e); });
+                    });
+                } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+                    videoElement.src = streamUrl;
+                    videoElement.play();
+                }
+            } 
+            else if (streamUrl.includes('.mpd')) {
+                iframeElement.style.display = 'none';
+                videoElement.style.display = 'block';
+
+                dashPlayer = dashjs.MediaPlayer().create();
+                dashPlayer.initialize(videoElement, streamUrl, true);
+            } 
+            else if (streamUrl.includes('/line/') || streamUrl.includes(':5909') || streamUrl.includes(':8080') || streamUrl.includes(':8880') || streamUrl.includes(':8007') || mpegts.isSupported()) {
+                iframeElement.style.display = 'none';
+                videoElement.style.display = 'block';
+
+                try {
+                    tsPlayer = mpegts.createPlayer({
+                        type: 'mse',
+                        isLive: true,
+                        url: streamUrl
+                    });
+                    tsPlayer.attachMediaElement(videoElement);
+                    tsPlayer.load();
+                    tsPlayer.play().catch(function() {
+                        videoElement.src = streamUrl;
+                        videoElement.play();
+                    });
+                } catch(e) {
+                    videoElement.src = streamUrl;
+                    videoElement.play();
+                }
+            } 
+            else {
+                videoElement.style.display = 'none';
+                iframeElement.style.display = 'block';
+                iframeElement.src = streamUrl;
+            }
+        }
+    </script>
+</body>
+</html>
