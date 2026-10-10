@@ -3,148 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Football Multi-Channel Player</title>
+    <title>Premier League Live Player</title>
+    <!-- โหลด hls.js สำหรับเล่นไฟล์ .m3u8 -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
-        body { 
-            background: #121212; 
-            color: #fff; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            min-height: 100vh; 
-            margin: 0; 
-            font-family: Arial, sans-serif;
-        }
-        .container {
-            width: 90%;
-            max-width: 900px;
-            text-align: center;
-            padding: 20px 0;
-        }
-        .channel-buttons {
-            margin-bottom: 15px;
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
             display: flex;
-            justify-content: center;
-            gap: 8px;
-            flex-wrap: wrap;
-            max-height: 250px;
-            overflow-y: auto;
-            padding: 5px;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .player-container {
+            width: 100%;
+            max-width: 800px;
             background: #1e1e1e;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+        }
+        video {
+            width: 100%;
+            height: auto;
+            display: block;
+            background-color: #000;
+        }
+        .playlist-section {
+            padding: 15px;
+        }
+        .playlist-title {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: #ff9800;
+        }
+        .station-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            background: #2a2a2a;
             border-radius: 8px;
-        }
-        .channel-btn {
-            background-color: #333;
-            color: #fff;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 5px;
+            margin-bottom: 10px;
             cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: bold;
-            transition: background 0.3s;
+            transition: background 0.2s ease;
         }
-        .channel-btn:hover, .channel-btn.active {
-            background-color: #e50914;
+        .station-item:hover {
+            background: #383838;
         }
-        video { 
-            width: 100%; 
-            border-radius: 8px; 
-            background: #000; 
-            aspect-ratio: 16 / 9;
+        .station-item.active {
+            border-left: 4px solid #4caf50;
+            background: #2e3b2f;
+        }
+        .station-item img {
+            width: 45px;
+            height: 45px;
+            object-fit: contain;
+            border-radius: 5px;
+        }
+        .station-info h4 {
+            margin: 0 0 4px 0;
+            font-size: 1rem;
+            color: #fff;
+        }
+        .station-info p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #aaa;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h2 id="current-channel">🔴 เลือกช่องถ่ายทอดสด</h2>
+    <div class="player-container">
+        <!-- วิดีโอ HTML5 Player -->
+        <video id="video" controls autoplay poster="https://apiv2.allsportsapi.com/logo/141_arsenal.jpg"></video>
         
-        <!-- ปุ่มสลับช่องทั้งหมดรวมชุดใหม่ -->
-        <div class="channel-buttons">
-            <!-- กลุ่มช่องเดิม -->
-            <button class="channel-btn active" onclick="changeChannel('http://line.ottcst.net/live/PK5Z3U9BGS/K42HMA3QEJ/1762008.ts', 'ช่องหลัก (1762008.ts)', this)">ช่องหลัก</button>
-            <button class="channel-btn" onclick="changeChannel('http://line.ottcst.net/live/PK5Z3U9BGS/K42HMA3QEJ/1562263.ts', 'NOWSPORTS', this)">NOWSPORTS</button>
-            <button class="channel-btn" onclick="changeChannel('http://line.ottcst.net/live/PK5Z3U9BGS/K42HMA3QEJ/1562262.ts', 'TNT SPORTS 1', this)">TNT SPORTS 1</button>
-            <button class="channel-btn" onclick="changeChannel('http://supportott.ottc.pro:80/Barhana-mustax/BQ8IK1CALA/1133039', '|UK| TNT SPORTS 1 50FPS', this)">TNT 1 (50FPS)</button>
-            <button class="channel-btn" onclick="changeChannel('http://supportott.ottc.pro:80/Barhana-mustax/BQ8IK1CALA/644692', '|UK| HubPremier 1', this)">HubPremier 1</button>
-            <button class="channel-btn" onclick="changeChannel('http://supportott.ottc.pro:80/Barhana-mustax/BQ8IK1CALA/644691', '|UK| HubPremier 2', this)">HubPremier 2</button>
-            <button class="channel-btn" onclick="changeChannel('http://supportott.ottc.pro:80/Barhana-mustax/BQ8IK1CALA/644690', '|UK| HubPremier 3', this)">HubPremier 3</button>
-            <button class="channel-btn" onclick="changeChannel('http://supportott.ottc.pro:80/Barhana-mustax/BQ8IK1CALA/644689', '|UK| HubPremier 4', this)">HubPremier 4</button>
-
-            <!-- กลุ่ม Now Sports เพิ่มเติม -->
-            <button class="channel-btn" onclick="changeChannel('http://supportott.ottc.pro:80/Barhana-mustax/BQ8IK1CALA/439056', '|HK| Now Sports 4K', this)">Now Sports 4K</button>
-            <button class="channel-btn" onclick="changeChannel('http://supportott.ottc.pro:80/Barhana-mustax/BQ8IK1CALA/439055', '|HK| Now Sports PL 1 FHD', this)">Now PL 1 FHD</button>
-            <button class="channel-btn" onclick="changeChannel('http://supportott.ottc.pro:80/Barhana-mustax/BQ8IK1CALA/439054', '|HK| Now Sports PL 2 FHD', this)">Now PL 2 FHD</button>
-            <button class="channel-btn" onclick="changeChannel('http://supportott.ottc.pro:80/Barhana-mustax/BQ8IK1CALA/439053', '|HK| Now Sports PL 3 FHD', this)">Now PL 3 FHD</button>
-            <button class="channel-btn" onclick="changeChannel('http://supportott.ottc.pro:80/Barhana-mustax/BQ8IK1CALA/439052', '|HK| Now Sports PL 4 FHD', this)">Now PL 4 FHD</button>
-            <button class="channel-btn" onclick="changeChannel('http://supportott.ottc.pro:80/Barhana-mustax/BQ8IK1CALA/439051', '|HK| Now Sports PL 5 FHD', this)">Now PL 5 FHD</button>
-            <button class="channel-btn" onclick="changeChannel('http://supportott.ottc.pro:80/Barhana-mustax/BQ8IK1CALA/439050', '|HK| Now Sports PL 6 FHD', this)">Now PL 6 FHD</button>
-            <button class="channel-btn" onclick="changeChannel('http://supportott.ottc.pro:80/Barhana-mustax/BQ8IK1CALA/439049', '|HK| Now Sports 1 HD', this)">Now Sports 1 HD</button>
-            <button class="channel-btn" onclick="changeChannel('http://supportott.ottc.pro:80/Barhana-mustax/BQ8IK1CALA/439048', '|HK| Now Sports 2 HD', this)">Now Sports 2 HD</button>
-            <button class="channel-btn" onclick="changeChannel('http://supportott.ottc.pro:80/Barhana-mustax/BQ8IK1CALA/439047', '|HK| Now Sports 3 HD', this)">Now Sports 3 HD</button>
-            <button class="channel-btn" onclick="changeChannel('http://supportott.ottc.pro:80/Barhana-mustax/BQ8IK1CALA/439046', '|HK| Now Sports 4 HD', this)">Now Sports 4 HD</button>
-            <button class="channel-btn" onclick="changeChannel('http://supportott.ottc.pro:80/Barhana-mustax/BQ8IK1CALA/439045', '|HK| Now Sports 5 HD', this)">Now Sports 5 HD</button>
-            <button class="channel-btn" onclick="changeChannel('http://supportott.ottc.pro:80/Barhana-mustax/BQ8IK1CALA/439044', '|HK| Now Sports 6 HD', this)">Now Sports 6 HD</button>
-            <button class="channel-btn" onclick="changeChannel('http://supportott.ottc.pro:80/Barhana-mustax/BQ8IK1CALA/439043', '|HK| Now Sports 7 HD', this)">Now Sports 7 HD</button>
-
-            <!-- กลุ่ม beIN Sports 4K -->
-            <button class="channel-btn" onclick="changeChannel('http://a1.24tv.tn:2052/2482959335691767/427683010928794/354256', 'beIN SPORTS 4K', this)">beIN 4K</button>
-            <button class="channel-btn" onclick="changeChannel('http://a1.24tv.tn:2052/2482959335691767/427683010928794/354258', 'beIN SPORTS 4K 1', this)">beIN 4K 1</button>
-            <button class="channel-btn" onclick="changeChannel('http://a1.24tv.tn:2052/2482959335691767/427683010928794/354260', 'beIN SPORTS 4K 3', this)">beIN 4K 3</button>
+        <!-- รายการลิงก์ถ่ายทอดสด -->
+        <div class="playlist-section">
+            <div class="playlist-title">📺 เลือกลิงก์รับชม / ลิงก์สำรอง:</div>
+            <div id="playlist"></div>
         </div>
-
-        <!-- Video Element -->
-        <video id="videoElement" controls autoplay></video>
     </div>
 
-    <!-- โหลดไลบรารี mpegts.js -->
-    <script src="https://cdn.jsdelivr.net/npm/mpegts.js@1.8.0/dist/mpegts.js"></script>
     <script>
-        let player = null;
-        const videoElement = document.getElementById('videoElement');
+        // ข้อมูล JSON รวมลิงก์ทั้งหมด
+        const playlistData = [
+            {
+                "name": "อาร์เซน่อล VS ลีดส์ ยูไนเต็ด (ลิงก์หลัก)",
+                "info": "⚽ Premier League | 📅 10/10/2026 | ⏰ 18:30",
+                "image": "https://apiv2.allsportsapi.com/logo/141_arsenal.jpg",
+                "url": "https://messi.damitv.st/live-hls/channel/pl/2026-10-10/ars-lee/playlist.m3u8?tk=AmIOqvE7zRHKqC8TaOjvTw&e=1791676668",
+                "referer": "https://messi.damitv.st",
+                "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+            },
+            {
+                "name": "อาร์เซน่อล VS ลีดส์ ยูไนเต็ด (ลิงก์สำรอง 1)",
+                "info": "⚽ Premier League | 📅 10/10/2026 | ⏰ 18:30",
+                "image": "https://apiv2.allsportsapi.com/logo/141_arsenal.jpg",
+                "url": "https://pulltx.cqsycw.com/live/hd-en-6MwdqQhYozyJA6NSrr.m3u8?txSecret=682bb7ac98274aead052ae4a14bfe87b&txTime=6ACEB1A9",
+                "referer": "https://pulltx.cqsycw.com",
+                "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+            }
+        ];
 
-        function playStream(url) {
-            if (mpegts.getFeatureList().mseLivePlayback) {
-                // ทำลาย Player ตัวเก่าทิ้งก่อนเปิดช่องใหม่
-                if (player !== null) {
-                    player.unload();
-                    player.detachMediaElement();
-                    player.destroy();
-                    player = null;
+        const video = document.getElementById('video');
+        const playlistContainer = document.getElementById('playlist');
+        let hlsPlayer = null;
+
+        // ฟังก์ชันสำหรับสั่งเล่นวิดีโอตามลิงก์ที่เลือก
+        function playStream(station, index) {
+            // อัปเดตสถานะ Active ในรายการเลือก
+            document.querySelectorAll('.station-item').forEach((item, i) => {
+                if (i === index) item.classList.add('active');
+                else item.classList.remove('active');
+            });
+
+            if (Hls.isSupported()) {
+                if (hlsPlayer) {
+                    hlsPlayer.destroy(); // ทำลายอินสแตนซ์เก่าก่อนเล่นลิงก์ใหม่
                 }
 
-                player = mpegts.createPlayer({
-                    type: 'mpegts', 
-                    isLive: true,
-                    url: url
+                hlsPlayer = new Hls({
+                    xhrSetup: function (xhr, url) {
+                        try {
+                            // พยายามแนบ Referer (ทำงานได้หากรันผ่าน Proxy/สภาพแวดล้อมที่รองรับ)
+                            xhr.setRequestHeader('Referer', station.referer);
+                        } catch (e) {
+                            console.warn("ไม่สามารถตั้งค่า Referer ผ่านหน้าเว็บโดยตรงได้:", e);
+                        }
+                    }
                 });
-                
-                player.attachMediaElement(videoElement);
-                player.load();
-                player.play().catch(error => {
-                    console.log("Autoplay ถูกบล็อก:", error);
+
+                hlsPlayer.loadSource(station.url);
+                hlsPlayer.attachMedia(video);
+                hlsPlayer.on(Hls.Events.MANIFEST_PARSED, function () {
+                    video.play().catch(e => console.log("Auto-play blocked:", e));
                 });
-            } else {
-                alert("เบราว์เซอร์ของคุณไม่รองรับ mpegts.js");
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                // สำหรับ Safari / iOS Native Player
+                video.src = station.url;
+                video.addEventListener('loadedmetadata', function () {
+                    video.play();
+                });
             }
         }
 
-        function changeChannel(url, name, btnElement) {
-            // เปลี่ยนข้อความหัวข้อ
-            document.getElementById('current-channel').innerText = '🔴 กำลังสตรีม: ' + name;
-            
-            // สลับสถานะปุ่ม Active
-            document.querySelectorAll('.channel-btn').forEach(btn => btn.classList.remove('active'));
-            btnElement.classList.add('active');
+        // สร้างรายการลิงก์สตรีมมิ่งลงใน HTML
+        function renderPlaylist() {
+            playlistData.forEach((station, index) => {
+                const item = document.createElement('div');
+                item.className = `station-item ${index === 0 ? 'active' : ''}`;
+                item.onclick = () => playStream(station, index);
 
-            // เริ่มเล่นสตรีมช่องใหม่
-            playStream(url);
+                item.innerHTML = `
+                    <img src="${station.image}" alt="Logo">
+                    <div class="station-info">
+                        <h4>${station.name}</h4>
+                        <p>${station.info}</p>
+                    </div>
+                `;
+                playlistContainer.appendChild(item);
+            });
         }
 
-        // เริ่มต้นเปิดช่องแรกอัตโนมัติ
-        playStream('http://line.ottcst.net/live/PK5Z3U9BGS/K42HMA3QEJ/1762008.ts');
+        // เริ่มต้นการทำงาน (เล่นลิงก์แรกเป็นค่าเริ่มต้น)
+        renderPlaylist();
+        playStream(playlistData[0], 0);
     </script>
 
 </body>
